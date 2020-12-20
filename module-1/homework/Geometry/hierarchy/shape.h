@@ -24,7 +24,7 @@ public:
 
     virtual void reflex(const Line &axis) = 0;
 
-    virtual void scale(const Point &center, double coef) = 0;
+    virtual void scale(const Point &center, double coefficient) = 0;
 };
 
 
