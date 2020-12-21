@@ -2,12 +2,13 @@
 #define GEOMETRY_HIERARCHY_ELLIPSE_H_
 
 #include "shape.h"
+#include <utility>
 
 
 class Ellipse : public Shape {
     Point focus_a;
     Point focus_b;
-    double dist_;
+    double a;
 
     double c() const;
 

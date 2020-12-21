@@ -31,4 +31,10 @@ Point Point::operator*(double n) const {
     return res;
 }
 
+Point Point::rotate(double ang) const {
+    double new_x = x * cos(ang) - y * sin(ang);
+    double new_y = x * sin(ang) + y * cos(ang);
+    return {new_x, new_y};
+}
+
 

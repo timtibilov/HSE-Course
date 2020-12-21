@@ -18,6 +18,8 @@ struct Point {
     Point operator-(const Point &) const;
 
     Point operator*(double) const;
+
+    Point rotate(double) const;
 };
 
 #endif //GEOMETRY_HIERARCHY_POINT_H_

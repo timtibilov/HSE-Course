@@ -1,12 +1,15 @@
 #ifndef GEOMETRY_HIERARCHY_POLYGON_H_
 #define GEOMETRY_HIERARCHY_POLYGON_H_
 
+#include <vector>
 #include "shape.h"
 
 
 class Polygon : public Shape {
 public:
-    Polygon(std::vector<Point> &points) : vertices(points) {};
+    Polygon() : vertices({}) {}
+
+    Polygon(std::vector<Point> &points);
 
     int verticesCount() const;
 

@@ -7,10 +7,10 @@
 #include "const.h"
 
 
-Ellipse::Ellipse(const Point &a, const Point &b, double dist_sum) : focus_a(a), focus_b(b), dist_(dist_sum / 2.) {}
+Ellipse::Ellipse(const Point &a, const Point &b, double dist_sum) : focus_a(a), focus_b(b), a(dist_sum / 2.) {}
 
 double Ellipse::c() const {
-    return dist(focus_a, focus_b) / 2.;
+    return Utils::dist(focus_a, focus_b) / 2.;
 }
 
 std::pair<Point, Point> Ellipse::focuses() const {
@@ -18,19 +18,19 @@ std::pair<Point, Point> Ellipse::focuses() const {
 }
 
 std::pair<Line, Line> Ellipse::directrices() const {
-    double b = (dist_ * dist_ - c() * c());
+    double b = (a * a - c() * c());
     double c;
-    if (b > dist_)
+    if (b > a)
         c = b / eccentricity();
     else
-        c = dist_ / eccentricity();
+        c = a / eccentricity();
     Line f = Line({-c, 0}, {-c, 1});
     Line s = Line({c, 0}, {c, 1});
     return {f, s};
 }
 
 double Ellipse::eccentricity() const {
-    return c() / dist_;
+    return c() / a;
 }
 
 Point Ellipse::center() const {
@@ -38,44 +38,45 @@ Point Ellipse::center() const {
 }
 
 double Ellipse::perimeter() const {
-    double b = (dist_ * dist_ - c() * c());
-    return 4 * (PI * dist_ * b + (dist_ - b)) / (dist_ + b); // С точностью до 0.63%
+    double b = sqrt(a * a - c() * c());
+    return 4 * (PI * a * b + (a - b)) / (a + b); // С точностью до 0.63%
 }
 
 double Ellipse::area() const {
-    double b = (dist_ * dist_ - c() * c());
-    return dist_ * b * PI;
+    double b = sqrt(a * a - c() * c());
+    return a * b * PI;
 }
 
 bool Ellipse::operator==(const Shape &another) const {
-    const auto *shape = dynamic_cast<const Ellipse *>(&another);
-    if (shape != nullptr)
-        return eq(dist_, shape->dist_) &&
-               ((focus_a == shape->focus_a && focus_b == shape->focus_b) ||
-                (focus_a == shape->focus_b && focus_b == shape->focus_a));
+    const auto *ellipse = dynamic_cast<const Ellipse *>(&another);
+    if (ellipse != nullptr)
+        return Utils::eq(a, ellipse->a) &&
+               ((focus_a == ellipse->focus_a && focus_b == ellipse->focus_b) ||
+                (focus_a == ellipse->focus_b && focus_b == ellipse->focus_a));
     else
         return false;
 }
 
 bool Ellipse::isCongruentTo(const Shape &another) const {
-    const auto *shape = dynamic_cast<const Ellipse *>(&another);
-    if (shape != nullptr)
-        return eq(dist(focus_a, focus_b), dist(shape->focus_a, shape->focus_b)) && eq(dist_, shape->dist_);
+    const auto *ellipse = dynamic_cast<const Ellipse *>(&another);
+    if (ellipse != nullptr)
+        return Utils::eq(Utils::dist(focus_a, focus_b), Utils::dist(ellipse->focus_a, ellipse->focus_b)) &&
+               Utils::eq(a, ellipse->a);
     else
         return false;
 }
 
 bool Ellipse::isSimilarTo(const Shape &another) const {
-    const auto *shape = dynamic_cast<const Ellipse *>(&another);
-    if (shape != nullptr) {
-        double coef = dist(focus_a, focus_b) / dist(shape->focus_a, shape->focus_b);
-        return eq(dist_, shape->dist_ * coef);
+    const auto *ellipse = dynamic_cast<const Ellipse *>(&another);
+    if (ellipse != nullptr) {
+        double coef = Utils::dist(focus_a, focus_b) / Utils::dist(ellipse->focus_a, ellipse->focus_b);
+        return Utils::eq(a, ellipse->a * coef);
     } else
         return false;
 }
 
 bool Ellipse::containsPoint(const Point &point) const {
-    return dist(focus_a, point) + dist(focus_b, point) <= dist_ * 2;
+    return Utils::dist(focus_a, point) + Utils::dist(focus_b, point) <= a * 2;
 }
 
 void Ellipse::rotate(const Point &center, double angle) {
@@ -101,11 +102,11 @@ void Ellipse::reflex(const Point &center) {
 
 void Ellipse::reflex(const Line &axis) {
     Point vector = axis.getSecond() - axis.getFirst();
-    Point norm_vector = vector * (1. / dist(vector));
+    Point norm_vector = vector * (1. / Utils::dist(vector));
     std::vector<Point *> focuses{&focus_a, &focus_b};
     for (Point *focus : focuses) {
         Point point_vector = *focus - axis.getFirst();
-        double len = dot(vector, point_vector) / dist(vector);
+        double len = Utils::dot(vector, point_vector) / Utils::dist(vector);
         Point projection = axis.getFirst() + norm_vector * len;
         Point new_focus = projection * 2. - *focus;
         focus->x = new_focus.x;
