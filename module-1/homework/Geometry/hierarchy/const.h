@@ -1,0 +1,7 @@
+#ifndef GEOMETRY_HIERARCHY_CONST_H
+#define GEOMETRY_HIERARCHY_CONST_H
+
+const double PI = 3.1415926;
+const double EPS = 1e-6;
+
+#endif //GEOMETRY_HIERARCHY_CONST_H
