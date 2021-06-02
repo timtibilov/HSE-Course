@@ -6,11 +6,20 @@ class CustomAllocator {
 public:
     template <typename U>
     struct rebind {  // NOLINT
-        // Your code goes here
+        using other = CustomAllocator<U>;
     };
 
     using value_type = T;
-    // Your code goes here
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = std::size_t;
+    using pointer_difference = std::ptrdiff_t;
+    using propagate_on_container_copy_assignment = std::false_type;
+    using propagate_on_container_move_assignment = std::false_type;
+    using propogate_on_container_swap = std::false_type;
+    using is_always_equal = std::false_type;
 
     CustomAllocator();
     CustomAllocator(const CustomAllocator& other) noexcept;
@@ -19,19 +28,12 @@ public:
     template <typename U>
     explicit CustomAllocator(const CustomAllocator<U>& other) noexcept;
 
-    T* allocate(size_t n) {  // NOLINT
-        // Your code goes here        
-    }
-    void deallocate(T* p, size_t n) {  // NOLINT
-        // Your code goes here
-    };
+    pointer allocate(size_type n) throw (std::bad_alloc);
+    void deallocate(T* p, size_t n);
     template <typename... Args>
-    void construct(pointer p, Args&&... args) {  // NOLINT
-        // Your code goes here
-    };
-    void destroy(pointer p) {  // NOLINT
-        // Your code goes here
-    };
+    void construct(pointer p, Args&&... args);
+    void destroy(pointer p);
+    size_type max_size();
 
     template <typename K, typename U>
     friend bool operator==(const CustomAllocator<K>& lhs, const CustomAllocator<U>& rhs) noexcept;
@@ -39,15 +41,82 @@ public:
     friend bool operator!=(const CustomAllocator<K>& lhs, const CustomAllocator<U>& rhs) noexcept;
 
 private:
-    // Your code goes here
+    void* _arena;
+    int* _offset;
+    int* _ref_count;
+    const int _arena_size = 65536; // 2 ^ 16
 };
 
 template <typename T, typename U>
 bool operator==(const CustomAllocator<T>& lhs, const CustomAllocator<U>& rhs) noexcept {
-    // Your code goes here
+    return lhs.arena_ == rhs.arena_;
 }
 
 template <typename T, typename U>
 bool operator!=(const CustomAllocator<T>& lhs, const CustomAllocator<U>& rhs) noexcept {
-    // Your code goes here
+    return !(lhs == rhs);
+}
+
+template<typename T>
+CustomAllocator<T>::CustomAllocator() {
+    _arena = ::operator new(_arena_size * sizeof(T));
+    _offset = new int(0);
+    _ref_count = new int(1);
+}
+
+template<typename T>
+CustomAllocator<T>::CustomAllocator(const CustomAllocator& other) noexcept :
+    _arena(other._arena),
+    _offset(other._offset),
+    _ref_count(other._ref_count)
+{
+    (*_ref_count)++;
+}
+
+template<typename T>
+template<typename U>
+CustomAllocator<T>::CustomAllocator(const CustomAllocator<U>& other) noexcept :
+    _arena(other._arena),
+    _offset(other._offset),
+    _ref_count(other._ref_count)
+{
+    (*_ref_count)++;
+}
+
+template<typename T>
+CustomAllocator<T>::~CustomAllocator() {
+    (*_ref_count)--;
+    if (*_ref_count == 0) {
+        ::operator delete(_arena);
+        delete _offset;
+        delete _ref_count;
+    }
+}
+
+template<typename T>
+T* CustomAllocator<T>::allocate(std::size_t n) throw (std::bad_alloc) {
+    if (n > max_size())
+        throw (std::bad_alloc("Cannot allocate memory"))
+    int offset = *_offset;
+    *_offset += n;
+    return static_cast<pointer>(_arena) + offset;
+}
+
+template<typename T>
+void CustomAllocator<T>::deallocate(T* p, std::size_t n) {}
+
+template<typename T>
+template<typename... Args>
+void CustomAllocator<T>::construct(CustomAllocator::pointer p, Args&& ... args) {
+    ::new((void *)p) T(std::forward<Args>(args)...);
+}
+
+template<typename T>
+void CustomAllocator<T>::destroy(CustomAllocator::pointer p) {
+    p->~T();
+}
+
+template<typename T>
+std::size_t CustomAllocator<T>::max_size() {
+    return _arena_size - *_offset;
 }
