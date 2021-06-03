@@ -1,3 +1,5 @@
+// Realized by Taimuraz Tibilov, based on Linear Allocator principle
+
 #include <memory>
 #include <type_traits>
 
