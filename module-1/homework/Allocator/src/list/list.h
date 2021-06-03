@@ -131,10 +131,10 @@ public:
     const_iterator end() const noexcept { return iterator(NIL); }
 
     // Capacity
-    bool empty() const noexcept;
+    bool empty() const noexcep { return _size == 0; }
 
-    size_type size() const noexcept;
-    size_type maxSize() const noexcept;
+    size_type size() const noexcept { return _size; }
+    size_type maxSize() const noexcept { return _m_alloc.max_size(); }
 
     // Modifiers
     void clear();
