@@ -453,6 +453,16 @@ void task::list<T, Allocator>::sort() {
 }
 
 template<typename T, typename Allocator>
+void task::list<T, Allocator>::swap(task::list<T, Allocator>& other) throw (std::runtime_error) {
+    if (node_alloc_traits::propagate_on_container_swap::value)
+        std::swap(_m_alloc, other._m_alloc);
+    else if (_m_alloc == other._m_alloc)
+        throw std::runtime_error("Swap with different allocators");
+    std::swap(NIL, other.NIL);
+    std::swap(_size, other._size);
+}
+
+template<typename T, typename Allocator>
 typename task::list<T, Allocator>::reference task::list<T, Allocator>::front() {
     if (!size())
         throw std::runtime_error("Cannot return front of empty list");
