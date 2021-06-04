@@ -139,7 +139,7 @@ public:
 
     // Modifiers
     void clear();
-    void swap(list& other) throw (std::runtime_error);
+    void swap(list& other);
 
     void pushBack(const T& value);
     void pushBack(T&& value);
@@ -464,7 +464,7 @@ void task::list<T, Allocator>::sort() {
 }
 
 template<typename T, typename Allocator>
-void task::list<T, Allocator>::swap(task::list<T, Allocator>& other) throw (std::runtime_error) {
+void task::list<T, Allocator>::swap(task::list<T, Allocator>& other) {
     if (node_alloc_traits::propagate_on_container_swap::value)
         std::swap(_m_alloc, other._m_alloc);
     else if (_m_alloc == other._m_alloc)

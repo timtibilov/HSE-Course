@@ -1,4 +1,4 @@
-// Realized by Taimuraz Tibilov, based on Linear Allocator principle
+// Implemented by Taimuraz Tibilov, based on Linear Allocator principle
 
 #include <memory>
 #include <type_traits>
@@ -30,11 +30,11 @@ public:
     template <typename U>
     explicit CustomAllocator(const CustomAllocator<U>& other) noexcept;
 
-    pointer allocate(size_type n) throw (std::bad_alloc);
+    pointer allocate(size_type n);
     void deallocate(T* p, size_t n);
     template <typename... Args>
     void construct(pointer p, Args&&... args);
-    void destroy(pointer p);
+    void destroy(pointer p) noexcept;
     size_type max_size();
 
     template <typename K, typename U>
@@ -87,8 +87,7 @@ CustomAllocator<T>::CustomAllocator(const CustomAllocator<U>& other) noexcept :
 
 template<typename T>
 CustomAllocator<T>::~CustomAllocator() {
-    (*_ref_count)--;
-    if (*_ref_count == 0) {
+    if (--(*_ref_count) == 0) {
         ::operator delete(_arena);
         delete _offset;
         delete _ref_count;
@@ -96,7 +95,7 @@ CustomAllocator<T>::~CustomAllocator() {
 }
 
 template<typename T>
-T* CustomAllocator<T>::allocate(std::size_t n) throw (std::bad_alloc) {
+T* CustomAllocator<T>::allocate(std::size_t n) {
     if (n > max_size())
         throw (std::bad_alloc());
     int offset = *_offset;
@@ -114,7 +113,7 @@ void CustomAllocator<T>::construct(CustomAllocator::pointer p, Args&& ... args) 
 }
 
 template<typename T>
-void CustomAllocator<T>::destroy(CustomAllocator::pointer p) {
+void CustomAllocator<T>::destroy(CustomAllocator::pointer p) noexcept {
     p->~T();
 }
 
