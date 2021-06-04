@@ -1,3 +1,6 @@
 [submodule "clangformat-cmake"]
 	path = clangformat-cmake
 	url = https://github.com/morell5/clangformat-cmake.git
+[submodule "module-1/homework/Allocator/clangformat-cmake"]
+	path = module-1/homework/Allocator/clangformat-cmake
+	url = https://github.com/zemasoft/clangformat-cmake

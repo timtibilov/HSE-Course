@@ -20,8 +20,8 @@ public:
     using allocator_type = Allocator;
     using pointer = typename std::allocator_traits<Allocator>::pointer;
     using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
-    using const_iterator = const iterator
-    using size_type = std::size_t
+    using const_iterator = const iterator;
+    using size_type = std::size_t;
 
 public:
     class iterator {
@@ -29,8 +29,9 @@ public:
         using value_type = T;
         using pointer = T*;
         using reference = T&;
+        using const_reference = const T&;
         using iterator_category = std::bidirectional_iterator_tag;
-        using difference_type = std::ptrdiff_t
+        using difference_type = std::ptrdiff_t;
 
         explicit iterator(Node* ptr): _ptr(ptr) {}
 
@@ -78,11 +79,11 @@ private:
         }
 
         value_type getValue() const { return value; }
-        reference getValueRefer() { return value; }
+        reference getValueRef() { return value; }
         const_reference getValueRef() const { return value;}
 
-        Node* getNext() const { return next; }
-        Node* getPrev() const { return prev; }
+        Node* getNext() { return next; }
+        Node* getPrev() { return prev; }
 
         const Node* getNext() const { return next; }
         const Node* getPrev() const { return prev; }
@@ -131,14 +132,14 @@ public:
     const_iterator end() const noexcept { return iterator(NIL); }
 
     // Capacity
-    bool empty() const noexcep { return _size == 0; }
+    bool empty() const noexcept { return _size == 0; }
 
     size_type size() const noexcept { return _size; }
     size_type maxSize() const noexcept { return _m_alloc.max_size(); }
 
     // Modifiers
     void clear();
-    void swap(list& other) noexcept;
+    void swap(list& other) throw (std::runtime_error);
 
     void pushBack(const T& value);
     void pushBack(T&& value);
@@ -159,7 +160,7 @@ public:
     void unique();
     void sort();
 
-    allocator_type getAllocator() const noexcept;
+    allocator_type getAllocator() const noexcept { return allocator_type(_m_alloc); }
 
 private:
     using node_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<Node>;
@@ -177,7 +178,7 @@ private:
 
 template<typename T, typename Allocator>
 task::list<T, Allocator>::list() : NIL(_m_alloc.allocate(1)) {
-    size_ = 0;
+    _size = 0;
     _m_alloc.construct(NIL);
     NIL->setNext(NIL);
     NIL->setPrev(NIL);
@@ -214,15 +215,17 @@ task::list<T, Allocator>::list(const task::list<T, Allocator>& other, const Allo
 template<typename T, typename Allocator>
 task::list<T, Allocator>::list(task::list<T, Allocator>&& other, const Allocator& alloc) :
     _m_alloc(alloc),
-    NIL(other.NIL)
+    NIL(std::move(other.NIL)),
+    _size(std::move(other._size))
 {
     other.NIL = nullptr;
 }
 
 template<typename T, typename Allocator>
-task::list<T, Allocator>::list(task::list<T, Allocator>&& other) noexcept :
+task::list<T, Allocator>::list(task::list<T, Allocator>&& other) :
     _m_alloc(std::move(other._m_alloc)),
-    NIL(other.NIL)
+    NIL(std::move(other.NIL)),
+    _size(std::move(other._size))
 {
     other.NIL = nullptr;
 }
@@ -266,14 +269,22 @@ template<typename T, typename Allocator>
 task::list<T, Allocator>& task::list<T, Allocator>::operator=(task::list<T, Allocator>&& other) noexcept {
     clear();
     if (node_alloc_traits::propagate_on_container_move_assignment::value) {
-        alloc_ = std::move(other._m_alloc);
-        NIL = other.NIL;
-        other.NIL = nullptr;
+        _m_alloc = std::move(other._m_alloc);
+        _size = std::move(other._size);
+        other._size = std::move(0);
+        NIL = std::move(other.NIL);
+        other.NIL = new Node();
+        other.NIL->setNext(other.NIL);
+        other.NIL->setPrev(other.NIL);
     } else if (node_alloc_traits::is_always_equal::value || _m_alloc == other._m_alloc) {
-        NIL = other.NIL;
-        other.NIL = nullptr;
+        _size = std::move(other._size);
+        other._size = std::move(0);
+        NIL = std::move(other.NIL);
+        other.NIL = new Node();
+        other.NIL->setNext(other.NIL);
+        other.NIL->setPrev(other.NIL);
     } else  {
-        for (auto it = other.begin(); it != other.end(); ++it)
+        for (iterator it = other.begin(); it != other.end(); ++it)
             pushBack(std::move(*it));
     }
     return *this;
@@ -375,7 +386,7 @@ void task::list<T, Allocator>::resize(size_t count) {
     while (_size > count)
         popBack();
     while (_size < count)
-        push_back({});
+        pushBack({});
 }
 
 template<typename T, typename Allocator>
@@ -395,7 +406,7 @@ void task::list<T, Allocator>::remove(Node* node) {
     prev->setNext(next);
     next->setPrev(prev);
     _m_alloc.destroy(node);
-    _m_alloc.dealocate(node, 1);
+    _m_alloc.deallocate(node, 1);
     --_size;
 }
 
@@ -412,22 +423,22 @@ void task::list<T, Allocator>::unique() {
 }
 
 template<typename T, typename Allocator>
-task::list<T, Allocator> task::list<T, Allocator>::merge(const task::list<T, Allocator>& left, const task::list<T, Allocator>& right) {
+task::list<T, Allocator> task::list<T, Allocator>::merge(const task::list<T, Allocator>& first, const task::list<T, Allocator>& second) {
     task::list<T, Allocator> result;
     Node* fHead = first.NIL->getNext();
     Node* sHead = second.NIL->getNext();
     while (fHead != first.NIL || sHead != second.NIL) {
         if (sHead == second.NIL) {
-            result.push_back(std::move(fHead->getValue()));
+            result.pushBack(std::move(fHead->getValue()));
             fHead = fHead->getNext();
         } else if (fHead == first.NIL) {
-            result.push_back(std::move(sHead->getValue()));
+            result.pushBack(std::move(sHead->getValue()));
             sHead = sHead->getNext();
         } else if (sHead->getValue() > fHead->getValue()) {
-            result.push_back(std::move(fHead->getValue()));
+            result.pushBack(std::move(fHead->getValue()));
             fHead = fHead->getNext();
         } else {
-            result.push_back(std::move(sHead->getValue()));
+            result.pushBack(std::move(sHead->getValue()));
             sHead = sHead->getNext();
         }
     }

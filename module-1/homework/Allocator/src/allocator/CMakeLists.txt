@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(runner)
+project("runner")
 
-add_library(allocator allocator.h)
-set_target_properties(allocator PROPERTIES LINKER_LANGUAGE CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-################ clang-format ################
-list(APPEND CMAKE_MODULE_PATH $ENV{CLANG_FORMAT_SUBMODULE}/cmake)
-include(ClangFormat)
-target_clangformat_setup(allocator)
+add_library(allocator INTERFACE)
+
+target_include_directories(allocator INTERFACE  ${CMAKE_CURRENT_SOURCE_DIR})

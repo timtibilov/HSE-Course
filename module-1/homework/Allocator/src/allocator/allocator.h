@@ -46,12 +46,12 @@ private:
     void* _arena;
     int* _offset;
     int* _ref_count;
-    const int _arena_size = 65536; // 2 ^ 16
+    int _arena_size = 65536; // 2 ^ 16
 };
 
 template <typename T, typename U>
 bool operator==(const CustomAllocator<T>& lhs, const CustomAllocator<U>& rhs) noexcept {
-    return lhs.arena_ == rhs.arena_;
+    return lhs._arena == rhs._arena;
 }
 
 template <typename T, typename U>
@@ -98,7 +98,7 @@ CustomAllocator<T>::~CustomAllocator() {
 template<typename T>
 T* CustomAllocator<T>::allocate(std::size_t n) throw (std::bad_alloc) {
     if (n > max_size())
-        throw (std::bad_alloc("Cannot allocate memory"))
+        throw (std::bad_alloc());
     int offset = *_offset;
     *_offset += n;
     return static_cast<pointer>(_arena) + offset;
