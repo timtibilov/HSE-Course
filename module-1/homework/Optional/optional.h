@@ -21,7 +21,8 @@ namespace task {
     class Optional {
     public:
         using value_type = T;
-        using pointer = std::add_pointer_t<value_type>;
+        using pointer = typename std::pointer_traits<value_type>::pointer;
+        using const_pointer = const pointer;
 
         constexpr Optional() noexcept : ptr_(nullptr) {}
 
@@ -50,9 +51,9 @@ namespace task {
 
         constexpr explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
-        constexpr std::add_pointer_t<const value_type> operator->() const { return ptr_; }
+        constexpr const_pointer operator->() const { return ptr_; }
 
-        constexpr std::add_pointer_t<value_type> operator->() { return ptr_; }
+        constexpr pointer operator->() { return ptr_; }
 
         constexpr const value_type& operator*() const& { return *ptr_; }
 
