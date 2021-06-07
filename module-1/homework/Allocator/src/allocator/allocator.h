@@ -33,8 +33,8 @@ public:
     pointer allocate(size_type n);
     void deallocate(T* p, size_t n);
     template <typename... Args>
-    void construct(pointer p, Args&&... args);
-    void destroy(pointer p) noexcept;
+    void construct(pointer p, Args&&... args) noexcept(std::is_nothrow_constructible<value_type>::value);
+    void destroy(pointer p) noexcept(std::is_nothrow_destructible<value_type>::value);
     size_type max_size();
 
     template <typename K, typename U>
@@ -97,7 +97,7 @@ CustomAllocator<T>::~CustomAllocator() {
 template<typename T>
 T* CustomAllocator<T>::allocate(std::size_t n) {
     if (n > max_size())
-        throw (std::bad_alloc());
+        throw std::bad_alloc();
     int offset = *_offset;
     *_offset += n;
     return static_cast<pointer>(_arena) + offset;
@@ -108,12 +108,12 @@ void CustomAllocator<T>::deallocate(T* p, std::size_t n) {}
 
 template<typename T>
 template<typename... Args>
-void CustomAllocator<T>::construct(CustomAllocator::pointer p, Args&& ... args) {
+void CustomAllocator<T>::construct(CustomAllocator::pointer p, Args&& ... args) noexcept(std::is_nothrow_constructible<value_type>::value) {
     ::new((void *)p) T(std::forward<Args>(args)...);
 }
 
 template<typename T>
-void CustomAllocator<T>::destroy(CustomAllocator::pointer p) noexcept {
+void CustomAllocator<T>::destroy(CustomAllocator::pointer p) noexcept(std::is_nothrow_destructible<value_type>::value) {
     p->~T();
 }
 
