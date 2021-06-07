@@ -21,7 +21,7 @@ namespace task {
     class Optional {
     public:
         using value_type = T;
-        using pointer = typename std::pointer_traits<value_type>::pointer;
+        using pointer = typename std::pointer_traits<value_type*>::pointer;
         using const_pointer = const pointer;
 
         constexpr Optional() noexcept : ptr_(nullptr) {}
