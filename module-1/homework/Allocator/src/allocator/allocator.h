@@ -33,8 +33,8 @@ public:
     pointer allocate(size_type n);
     void deallocate(T* p, size_t n);
     template <typename... Args>
-    void construct(pointer p, Args&&... args) noexcept(std::is_nothrow_constructible<value_type>::value);
-    void destroy(pointer p) noexcept(std::is_nothrow_destructible<value_type>::value);
+    void construct(pointer p, Args&&... args) noexcept(std::is_nothrow_constructible_v<value_type, Args...>);
+    void destroy(pointer p) noexcept(std::is_nothrow_destructible_v<value_type>);
     size_type max_size();
 
     template <typename K, typename U>
@@ -108,12 +108,12 @@ void CustomAllocator<T>::deallocate(T* p, std::size_t n) {}
 
 template<typename T>
 template<typename... Args>
-void CustomAllocator<T>::construct(CustomAllocator::pointer p, Args&& ... args) noexcept(std::is_nothrow_constructible<value_type>::value) {
+void CustomAllocator<T>::construct(CustomAllocator::pointer p, Args&& ... args) noexcept(std::is_nothrow_constructible_v<value_type, Args...>) {
     ::new((void *)p) T(std::forward<Args>(args)...);
 }
 
 template<typename T>
-void CustomAllocator<T>::destroy(CustomAllocator::pointer p) noexcept(std::is_nothrow_destructible<value_type>::value) {
+void CustomAllocator<T>::destroy(CustomAllocator::pointer p) noexcept(std::is_nothrow_destructible_v<value_type>) {
     p->~T();
 }
 
