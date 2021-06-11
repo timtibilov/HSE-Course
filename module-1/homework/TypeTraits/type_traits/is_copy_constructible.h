@@ -19,7 +19,7 @@ struct IsInvalidBaseToDerivedCast {
     static std::integral_constant<bool,
             !std::is_same_v<base, derived> &&
             std::is_base_of_v<base, derived> &&
-            !LibCppIsConstructible<derived, Base>::type::value> value;
+            !LibCppIsConstructible<derived, base>::type::value> value;
 };
 
 template <typename To, typename From>
