@@ -21,9 +21,18 @@ struct Conditional<true, T, F> {
     using type = T;
 };
 
+template <typename T, typename F>
+struct Conditional<false, T, F> {
+    using type = F;
+};
+
 template <bool condition, typename T, typename F>
-using conditional_v = // Your code goes here
+using conditional_v = typename Conditional<condition, T, F>::type;
 
 // MoveIfNoExcept
-// Your code goes here
+template <typename T>
+conditional_v<!IsNoThrowMoveConstructible<T>::value && IsCopyConstructible<T>::value, const T&, T&&>
+MoveIfNoExcept(T& t) {
+    return std::move(t);
+}
 // MoveIfNoExcept
